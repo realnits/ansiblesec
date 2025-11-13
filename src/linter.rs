@@ -3,6 +3,7 @@ use crate::errors::Result;
 use crate::scanner::Finding;
 
 pub struct Linter {
+    #[allow(dead_code)]
     config: Config,
 }
 

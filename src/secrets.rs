@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
-use crate::errors::{AnsibleSecError, Result};
+use crate::errors::Result;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecretPattern {
@@ -46,6 +46,7 @@ impl Severity {
         }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Self {
         match s.to_uppercase().as_str() {
             "CRITICAL" => Severity::Critical,
@@ -67,6 +68,7 @@ pub struct SecretDetector {
 #[derive(Debug, Clone)]
 struct CompiledPattern {
     id: String,
+    #[allow(dead_code)]
     name: String,
     regex: Regex,
     severity: Severity,
@@ -74,6 +76,34 @@ struct CompiledPattern {
 }
 
 impl SecretDetector {
+    /// Create with custom patterns
+    #[allow(dead_code)]
+    pub fn new(patterns: Vec<SecretPattern>, entropy_threshold: f64) -> Result<Self> {
+        let mut compiled_patterns = Vec::new();
+
+        for pattern in patterns {
+            match Regex::new(&pattern.pattern) {
+                Ok(regex) => {
+                    compiled_patterns.push(CompiledPattern {
+                        id: pattern.id,
+                        name: pattern.name,
+                        regex,
+                        severity: Severity::from_str(&pattern.severity),
+                        description: pattern.description,
+                    });
+                }
+                Err(e) => {
+                    eprintln!("Warning: Invalid regex pattern for {}: {}", pattern.name, e);
+                }
+            }
+        }
+
+        Ok(Self {
+            patterns: compiled_patterns,
+            entropy_threshold,
+        })
+    }
+
     /// Create from external rules file
     pub fn from_file<P: AsRef<Path>>(path: P, entropy_threshold: f64) -> Result<Self> {
         let content = fs::read_to_string(path.as_ref())?;
@@ -121,6 +151,12 @@ impl SecretDetector {
                 "SECRET_GITHUB_TOKEN",
                 "GitHub Token",
                 r"ghp_[0-9a-zA-Z]{36}",
+                "CRITICAL",
+            ),
+            (
+                "SECRET_PRIVATE_KEY",
+                "Private Key",
+                r"-----BEGIN (RSA |DSA |EC |OPENSSH )?PRIVATE KEY-----",
                 "CRITICAL",
             ),
         ];

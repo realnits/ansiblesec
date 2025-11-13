@@ -74,6 +74,7 @@ impl Cache {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn clear(&self) -> crate::errors::Result<()> {
         if self.cache_dir.exists() {
             fs::remove_dir_all(&self.cache_dir)?;
@@ -81,7 +82,6 @@ impl Cache {
         }
         Ok(())
     }
-
     fn hash_file(&self, file_path: &Path) -> crate::errors::Result<String> {
         let content = fs::read(file_path)?;
         let mut hasher = Hasher::new();

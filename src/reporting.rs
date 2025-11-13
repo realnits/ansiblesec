@@ -17,6 +17,7 @@ pub enum OutputFormat {
 }
 
 impl OutputFormat {
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<Self> {
         match s.to_lowercase().as_str() {
             "text" | "txt" => Ok(OutputFormat::Text),
@@ -57,7 +58,7 @@ impl Reporter {
         use colored::*;
 
         // Header with box drawing
-        output.push_str("\n");
+        output.push('\n');
         output.push_str(&format!("╔{}╗\n", "═".repeat(78)));
         output.push_str(&format!(
             "║{:^78}║\n",
@@ -102,7 +103,7 @@ impl Reporter {
         } else {
             output.push_str(&format!("   {}\n", "No findings detected!".green()));
         }
-        output.push_str("\n");
+        output.push('\n');
 
         // Secrets section with enhanced formatting
         if !findings.secrets.is_empty() {
@@ -151,7 +152,7 @@ impl Reporter {
                     }
                 }
             }
-            output.push_str("\n");
+            output.push('\n');
         }
 
         // Policy Violations with enhanced formatting
@@ -205,7 +206,7 @@ impl Reporter {
                     }
                 }
             }
-            output.push_str("\n");
+            output.push('\n');
         }
 
         // Lint Issues with enhanced formatting
@@ -240,7 +241,7 @@ impl Reporter {
                     ));
                 }
             }
-            output.push_str("\n");
+            output.push('\n');
         }
 
         // Final summary with recommendations
@@ -416,6 +417,7 @@ impl Reporter {
         }
     }
 
+    #[allow(dead_code)]
     fn severity_text(&self, severity: &str, count: usize) -> colored::ColoredString {
         use colored::*;
         let text = format!("{} {}", count, severity);

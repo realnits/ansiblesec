@@ -7,6 +7,7 @@ use crate::rules::{Rule, RuleType, RulesEngine};
 use crate::scanner::Finding;
 
 pub struct PolicyEngine {
+    #[allow(dead_code)]
     config: Config,
     rules_engine: RulesEngine,
 }

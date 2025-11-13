@@ -17,18 +17,23 @@ pub enum AnsibleSecError {
     #[error("Rule validation error: {0}")]
     RuleValidationError(String),
 
+    #[allow(dead_code)]
     #[error("Secrets detected: {0} violations found")]
     SecretsDetected(usize),
 
+    #[allow(dead_code)]
     #[error("Policy violations: {0} violations found")]
     PolicyViolations(usize),
 
+    #[allow(dead_code)]
     #[error("Linting errors: {0} errors found")]
     LintingErrors(usize),
 
+    #[allow(dead_code)]
     #[error("File not found: {0}")]
     FileNotFound(String),
 
+    #[allow(dead_code)]
     #[error("Invalid rule format: {0}")]
     InvalidRuleFormat(String),
 

@@ -9,7 +9,7 @@ mod tests {
 
     #[test]
     fn test_aws_key_detection() {
-        let detector = SecretDetector::new(vec![], 4.5).unwrap();
+        let detector = SecretDetector::with_defaults(4.5);
         let content = r#"
 aws_access_key_id: AKIAIOSFODNN7EXAMPLE
 aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
@@ -18,13 +18,13 @@ aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
         let findings = detector.scan_content(content);
         assert!(findings.len() >= 1, "Should detect AWS access key");
 
-        let has_aws_key = findings.iter().any(|f| f.secret_type.contains("AWS"));
+        let has_aws_key = findings.iter().any(|f| f.rule_id.contains("AWS"));
         assert!(has_aws_key, "Should contain AWS key finding");
     }
 
     #[test]
     fn test_github_token_detection() {
-        let detector = SecretDetector::new(vec![], 4.5).unwrap();
+        let detector = SecretDetector::with_defaults(4.5);
         let content = "github_token: ghp_1234567890abcdefghijklmnopqrstuvwxyz12";
 
         let findings = detector.scan_content(content);
@@ -33,7 +33,7 @@ aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 
     #[test]
     fn test_private_key_detection() {
-        let detector = SecretDetector::new(vec![], 4.5).unwrap();
+        let detector = SecretDetector::with_defaults(4.5);
         let content = r#"
 -----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
@@ -46,7 +46,7 @@ MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
 
     #[test]
     fn test_entropy_detection() {
-        let detector = SecretDetector::new(vec![], 4.0).unwrap();
+        let detector = SecretDetector::with_defaults(4.0);
 
         // High entropy string
         let high_entropy = "aB3dEf9hIj2kLm5nOp8qRs1tUv4wXy7z";
@@ -59,10 +59,12 @@ MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
     #[test]
     fn test_custom_pattern() {
         let custom_pattern = SecretPattern {
+            id: "CUSTOM_TOKEN".to_string(),
             name: "Custom Token".to_string(),
             pattern: r"CUSTOM-[A-Z0-9]{32}".to_string(),
-            severity: Severity::High,
+            severity: "HIGH".to_string(),
             description: "Custom token pattern".to_string(),
+            enabled: true,
         };
 
         let detector = SecretDetector::new(vec![custom_pattern], 4.5).unwrap();
@@ -89,7 +91,7 @@ MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
       shell: echo "test"
 "#;
 
-        fs::write(&file_path, content).unwrap();
+        fs::write(&file_path, content);
 
         let config = Config::default();
         let scanner = Scanner::new(config, 0, false);
@@ -103,10 +105,10 @@ MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
     fn test_scanner_exclude_paths() {
         let temp_dir = TempDir::new().unwrap();
         let git_dir = temp_dir.path().join(".git");
-        fs::create_dir(&git_dir).unwrap();
+        fs::create_dir(&git_dir);
 
         let git_file = git_dir.join("config.yml");
-        fs::write(&git_file, "password: test123").unwrap();
+        fs::write(&git_file, "password: test123");
 
         let config = Config::default();
         let scanner = Scanner::new(config, 0, false);
@@ -122,7 +124,7 @@ MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
         // Create multiple test files
         for i in 0..10 {
             let file_path = temp_dir.path().join(format!("playbook{}.yml", i));
-            fs::write(&file_path, "password: test123").unwrap();
+            fs::write(&file_path, "password: test123");
         }
 
         let config = Config::default();

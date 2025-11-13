@@ -231,7 +231,7 @@ impl Scanner {
                 .into_iter()
                 .filter_entry(|e| !self.is_excluded(e.path()))
             {
-                let entry = entry.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+                let entry = entry.map_err(std::io::Error::other)?;
                 if entry.file_type().is_file() && self.is_ansible_file(entry.path()) {
                     // Check file size
                     if let Ok(metadata) = entry.metadata() {

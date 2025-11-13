@@ -105,6 +105,7 @@ impl Config {
         Ok(config)
     }
 
+    #[allow(dead_code)]
     pub fn save(&self, path: &Path) -> Result<()> {
         let yaml = serde_yaml::to_string(self)?;
         fs::write(path, yaml)?;

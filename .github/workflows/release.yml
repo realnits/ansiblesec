@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    name: Release ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: ansiblesec
+            asset: ansiblesec-linux-amd64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            artifact: ansiblesec
+            asset: ansiblesec-linux-amd64-musl
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: ansiblesec
+            asset: ansiblesec-macos-amd64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: ansiblesec
+            asset: ansiblesec-macos-arm64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: ansiblesec.exe
+            asset: ansiblesec-windows-amd64.exe
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      
+      - name: Install musl tools
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get install -y musl-tools
+      
+      - name: Build
+        run: cargo build --release --locked --target ${{ matrix.target }}
+      
+      - name: Strip binary (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: strip target/${{ matrix.target }}/release/${{ matrix.artifact }}
+      
+      - name: Upload binary
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/${{ matrix.target }}/release/${{ matrix.artifact }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
