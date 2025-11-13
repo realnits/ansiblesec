@@ -39,7 +39,6 @@ impl Linter {
 
         // Check for proper playbook structure
         if yaml.is_sequence() {
-            // This is a list of plays
             if let Some(plays) = yaml.as_sequence() {
                 for (idx, play) in plays.iter().enumerate() {
                     if let Some(obj) = play.as_mapping() {

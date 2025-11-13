@@ -144,7 +144,7 @@ We welcome feature requests! Please:
 
 ## Security Issues
 
-For security vulnerabilities, please email security@example.com instead of using the issue tracker.
+For security vulnerabilities, please use GitHub Security Advisories instead of using the issue tracker.
 
 ## License
 

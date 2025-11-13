@@ -83,7 +83,7 @@ impl PolicyEngine {
     ) -> Vec<Finding> {
         let mut findings = Vec::new();
 
-        // Check if this is a playbook with tasks
+        // Check for playbook with tasks
         if let Some(tasks) = self.extract_tasks(yaml) {
             for (idx, task) in tasks.iter().enumerate() {
                 if let Some(obj) = task.as_mapping() {
@@ -126,7 +126,7 @@ impl PolicyEngine {
             if let Some(obj) = vars.as_mapping() {
                 for (key, value) in obj {
                     if let Some(key_str) = key.as_str() {
-                        // Check if this is a sensitive variable
+                        // Check for sensitive variable
                         if self.is_sensitive_var(key_str)
                             && !exceptions.contains(&key_str.to_string())
                         {

@@ -154,11 +154,9 @@ impl SbomGenerator {
     }
 
     fn fetch_cves(&self, name: &str, version: &str) -> Result<Vec<String>> {
-        // This is a simplified CVE lookup
-        // In production, you'd query NVD API or similar
         log::info!("Fetching CVEs for {} {}", name, version);
 
-        // Placeholder - would make actual API calls
+        // CVE lookup not implemented yet
         Ok(vec![])
     }
 
@@ -213,8 +211,8 @@ impl SbomGenerator {
             "spdxVersion": "SPDX-2.3",
             "dataLicense": "CC0-1.0",
             "SPDXID": "SPDXRef-DOCUMENT",
-            "name": "Ansible Security SBOM",
-            "documentNamespace": format!("https://ansiblesec.example.com/sbom/{}", uuid::Uuid::new_v4()),
+            "name": "Ansible Playbook SBOM",
+            "documentNamespace": format!("https://ansiblesec.io/sbom/{}", uuid::Uuid::new_v4()),
             "creationInfo": {
                 "created": chrono::Utc::now().to_rfc3339(),
                 "creators": [

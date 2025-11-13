@@ -14,7 +14,7 @@ We take security seriously. If you discover a security vulnerability in ansibles
 
 **Please DO NOT report security vulnerabilities through public GitHub issues.**
 
-Instead, please send an email to security@example.com with:
+Instead, please report them via GitHub's Security Advisories or create an issue with the label "security":
 
 1. **Description** of the vulnerability
 2. **Steps to reproduce** the issue
@@ -85,6 +85,6 @@ We currently do not have a bug bounty program. However, we greatly appreciate se
 
 ## Contact
 
-For security concerns: security@example.com
+For security concerns: GitHub Security Advisories
 
 For general questions: GitHub Issues
