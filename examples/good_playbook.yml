@@ -1,0 +1,50 @@
+---
+# Example secure playbook
+
+- name: Deploy Web Application Securely
+  hosts: webservers
+  become: true
+  vars_files:
+    - vault_secrets.yml
+  
+  tasks:
+    - name: Install nginx
+      package:
+        name: nginx
+        state: present
+      become: true
+    
+    - name: Configure application
+      template:
+        src: app_config.j2
+        dest: /etc/app/config.yml
+        mode: "0640"
+        owner: appuser
+        group: appgroup
+      notify: Restart application
+    
+    - name: Create database user
+      mysql_user:
+        name: "{{ db_user }}"
+        password: "{{ vault_db_password }}"
+        priv: "appdb.*:ALL"
+      no_log: true
+    
+    - name: Check application status
+      command: systemctl status app
+      register: app_status
+      changed_when: false
+      failed_when: false
+    
+    - name: Deploy application code
+      git:
+        repo: "{{ app_repo_url }}"
+        dest: /var/www/app
+        version: "{{ app_version }}"
+      notify: Restart application
+  
+  handlers:
+    - name: Restart application
+      systemd:
+        name: app
+        state: restarted

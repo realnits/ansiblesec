@@ -1,0 +1,109 @@
+name: Ansible Security Scan
+description: Scan Ansible playbooks for security issues
+author: ansiblesec
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  path:
+    description: 'Path to scan (playbook or directory)'
+    required: false
+    default: '.'
+  rules:
+    description: 'Path to custom rules file'
+    required: false
+  output:
+    description: 'Output file path'
+    required: false
+    default: 'ansiblesec-report.json'
+  format:
+    description: 'Output format (text, json, sarif)'
+    required: false
+    default: 'sarif'
+  fail-on-findings:
+    description: 'Fail the action if findings are detected'
+    required: false
+    default: 'true'
+  version:
+    description: 'ansiblesec version to use'
+    required: false
+    default: 'latest'
+
+outputs:
+  findings-count:
+    description: 'Total number of findings'
+    value: ${{ steps.scan.outputs.findings-count }}
+  critical-count:
+    description: 'Number of critical findings'
+    value: ${{ steps.scan.outputs.critical-count }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install ansiblesec
+      shell: bash
+      run: |
+        if [ "${{ inputs.version }}" = "latest" ]; then
+          VERSION=$(curl -s https://api.github.com/repos/yourusername/ansiblesec/releases/latest | jq -r .tag_name)
+        else
+          VERSION=${{ inputs.version }}
+        fi
+        
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        ARCH=$(uname -m)
+        
+        if [ "$ARCH" = "x86_64" ]; then
+          ARCH="amd64"
+        elif [ "$ARCH" = "aarch64" ]; then
+          ARCH="arm64"
+        fi
+        
+        BINARY_NAME="ansiblesec-${OS}-${ARCH}"
+        if [ "$OS" = "windows" ]; then
+          BINARY_NAME="${BINARY_NAME}.exe"
+        fi
+        
+        curl -L "https://github.com/yourusername/ansiblesec/releases/download/${VERSION}/${BINARY_NAME}" -o ansiblesec
+        chmod +x ansiblesec
+        sudo mv ansiblesec /usr/local/bin/
+    
+    - name: Run ansiblesec scan
+      id: scan
+      shell: bash
+      run: |
+        ARGS="${{ inputs.path }} --format ${{ inputs.format }} --output ${{ inputs.output }} --ci-mode"
+        
+        if [ -n "${{ inputs.rules }}" ]; then
+          ARGS="$ARGS --rules ${{ inputs.rules }}"
+        fi
+        
+        if [ "${{ inputs.fail-on-findings }}" = "true" ]; then
+          ARGS="$ARGS --fail-on-findings"
+        fi
+        
+        ansiblesec scan $ARGS || EXIT_CODE=$?
+        
+        # Parse results (simplified)
+        if [ -f "${{ inputs.output }}" ]; then
+          FINDINGS=$(jq '.summary.critical + .summary.high + .summary.medium + .summary.low + .summary.info' ${{ inputs.output }})
+          CRITICAL=$(jq '.summary.critical' ${{ inputs.output }})
+          
+          echo "findings-count=$FINDINGS" >> $GITHUB_OUTPUT
+          echo "critical-count=$CRITICAL" >> $GITHUB_OUTPUT
+        fi
+        
+        exit ${EXIT_CODE:-0}
+    
+    - name: Upload results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ansiblesec-results
+        path: ${{ inputs.output }}
+    
+    - name: Upload SARIF
+      if: always() && inputs.format == 'sarif'
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.output }}

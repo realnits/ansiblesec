@@ -1,0 +1,47 @@
+# Build stage
+FROM rust:1.75-slim as builder
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy manifests
+COPY Cargo.toml Cargo.lock ./
+
+# Create dummy source to cache dependencies
+RUN mkdir src && \
+    echo "fn main() {}" > src/main.rs && \
+    cargo build --release && \
+    rm -rf src
+
+# Copy real source
+COPY src ./src
+
+# Build for release
+RUN cargo build --release
+
+# Runtime stage
+FROM debian:bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy binary from builder
+COPY --from=builder /build/target/release/ansiblesec /usr/local/bin/ansiblesec
+
+# Create non-root user
+RUN useradd -m -u 1000 ansiblesec && \
+    mkdir /workspace && \
+    chown ansiblesec:ansiblesec /workspace
+
+USER ansiblesec
+WORKDIR /workspace
+
+ENTRYPOINT ["ansiblesec"]
+CMD ["--help"]

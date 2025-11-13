@@ -1,0 +1,43 @@
+---
+# Example Ansible playbook with various security issues for testing
+
+- name: Deploy web application
+  hosts: webservers
+  become: true
+  vars:
+    # SECURITY ISSUE: Hardcoded password
+    db_password: "SuperSecret123!"
+    # SECURITY ISSUE: AWS credentials
+    aws_access_key: "AKIAIOSFODNN7EXAMPLE"
+    aws_secret_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    
+  tasks:
+    # SECURITY ISSUE: Using shell module without proper controls
+    - name: Run shell command
+      shell: |
+        echo "{{ db_password }}" > /tmp/password.txt
+      
+    # SECURITY ISSUE: No no_log for sensitive task
+    - name: Create database user
+      mysql_user:
+        name: appuser
+        password: "{{ db_password }}"
+        priv: "*.*:ALL"
+    
+    # SECURITY ISSUE: Overly permissive file permissions
+    - name: Create config file
+      copy:
+        content: "api_key: sk-1234567890abcdefghijklmnopqrstuvwxyz"
+        dest: /etc/app/config.yml
+        mode: "0777"
+    
+    # SECURITY ISSUE: Using command without changed_when
+    - name: check disk space
+      command: df -h
+    
+    # GOOD: Proper use of vault and no_log
+    - name: Set encrypted password
+      user:
+        name: admin
+        password: "{{ vault_admin_password }}"
+      no_log: true

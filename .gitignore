@@ -1,0 +1,39 @@
+# Target directory
+/target/
+
+# Cargo lock file (uncomment if you're building a library)
+# Cargo.lock
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cache
+.ansiblesec_cache/
+*.cache
+
+# Test artifacts
+*.log
+coverage/
+*.profraw
+
+# Environment
+.env
+.env.local
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Backup files
+*.bak
+*.tmp

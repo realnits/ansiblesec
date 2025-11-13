@@ -1,0 +1,454 @@
+# AnsibleSec Policy Rules
+# Security policies for Ansible playbooks best practices
+# Each rule must have: id, name, severity, description, enabled
+
+rules:
+  # ===== Dangerous Modules =====
+  - id: POLICY_DANGEROUS_SHELL
+    name: "Dangerous shell module usage"
+    severity: HIGH
+    description: "Use of 'shell' module detected - prefer specific modules"
+    enabled: true
+    module: "shell"
+    remediation: "Use specific Ansible modules instead of shell when possible"
+
+  - id: POLICY_DANGEROUS_COMMAND
+    name: "Dangerous command module usage"
+    severity: MEDIUM
+    description: "Use of 'command' module detected - prefer specific modules"
+    enabled: true
+    module: "command"
+    remediation: "Use specific Ansible modules instead of command when possible"
+
+  - id: POLICY_DANGEROUS_RAW
+    name: "Dangerous raw module usage"
+    severity: CRITICAL
+    description: "Use of 'raw' module detected - highly discouraged"
+    enabled: true
+    module: "raw"
+    remediation: "Avoid raw module, use proper Ansible modules"
+
+  - id: POLICY_DANGEROUS_SCRIPT
+    name: "Dangerous script module usage"
+    severity: HIGH
+    description: "Use of 'script' module detected - review security implications"
+    enabled: true
+    module: "script"
+    remediation: "Review script content and consider using native modules"
+
+  # ===== Credential Management =====
+  - id: POLICY_HARDCODED_PASSWORD
+    name: "Hardcoded password detected"
+    severity: CRITICAL
+    description: "Potential hardcoded password in playbook"
+    enabled: true
+    pattern: "(password|passwd|pwd)\\s*[:=]\\s*['\"]?(?!\\{\\{)[^'\"\\s]+"
+    remediation: "Use Ansible Vault or variables for passwords"
+
+  - id: POLICY_HARDCODED_API_KEY
+    name: "Hardcoded API key detected"
+    severity: CRITICAL
+    description: "Potential hardcoded API key in playbook"
+    enabled: true
+    pattern: "(api[_-]?key|apikey)\\s*[:=]\\s*['\"]?(?!\\{\\{)[^'\"\\s]+"
+    remediation: "Use Ansible Vault or variables for API keys"
+
+  - id: POLICY_HARDCODED_TOKEN
+    name: "Hardcoded token detected"
+    severity: CRITICAL
+    description: "Potential hardcoded token in playbook"
+    enabled: true
+    pattern: "token\\s*[:=]\\s*['\"]?(?!\\{\\{)[^'\"\\s]+"
+    remediation: "Use Ansible Vault or variables for tokens"
+
+  - id: POLICY_HARDCODED_SECRET
+    name: "Hardcoded secret detected"
+    severity: CRITICAL
+    description: "Potential hardcoded secret in playbook"
+    enabled: true
+    pattern: "secret\\s*[:=]\\s*['\"]?(?!\\{\\{)[^'\"\\s]+"
+    remediation: "Use Ansible Vault or variables for sensitive data"
+
+  - id: POLICY_NO_VAULT_ENCRYPTION
+    name: "Sensitive variables not encrypted"
+    severity: HIGH
+    description: "Sensitive variables should use Ansible Vault"
+    enabled: true
+    remediation: "Encrypt sensitive variables with ansible-vault"
+
+  # ===== File Permissions =====
+  - id: POLICY_INSECURE_FILE_PERMS_777
+    name: "File permissions 0777"
+    severity: CRITICAL
+    description: "File mode 0777 detected - overly permissive"
+    enabled: true
+    pattern: "mode\\s*[:=]\\s*['\"]?0?777['\"]?"
+    remediation: "Use restrictive permissions (e.g., 0644 for files, 0755 for directories)"
+
+  - id: POLICY_INSECURE_FILE_PERMS_666
+    name: "File permissions 0666"
+    severity: HIGH
+    description: "File mode 0666 detected - overly permissive"
+    enabled: true
+    pattern: "mode\\s*[:=]\\s*['\"]?0?666['\"]?"
+    remediation: "Use restrictive permissions (e.g., 0644 for files)"
+
+  - id: POLICY_INSECURE_DIR_PERMS
+    name: "Directory permissions too permissive"
+    severity: HIGH
+    description: "Directory permissions are overly permissive"
+    enabled: true
+    remediation: "Use appropriate directory permissions (typically 0755 or stricter)"
+
+  - id: POLICY_EXECUTABLE_WORLD_WRITABLE
+    name: "World-writable executable"
+    severity: CRITICAL
+    description: "Executable files should not be world-writable"
+    enabled: true
+    remediation: "Remove world-write permission from executables"
+
+  # ===== Privilege Escalation =====
+  - id: POLICY_BECOME_WITHOUT_USER
+    name: "Become without become_user"
+    severity: MEDIUM
+    description: "Using become without specifying become_user"
+    enabled: true
+    remediation: "Explicitly specify become_user for clarity"
+
+  - id: POLICY_SUDO_WITHOUT_PASSWORD
+    name: "Sudo without password"
+    severity: HIGH
+    description: "Sudo configured without password requirement"
+    enabled: true
+    remediation: "Require password for sudo operations in production"
+
+  - id: POLICY_BECOME_ROOT_UNNECESSARY
+    name: "Unnecessary root privileges"
+    severity: MEDIUM
+    description: "Task may not require root privileges"
+    enabled: true
+    remediation: "Use least privilege principle, avoid unnecessary become"
+
+  # ===== Network Security =====
+  - id: POLICY_HTTP_NOT_HTTPS
+    name: "HTTP instead of HTTPS"
+    severity: HIGH
+    description: "Using HTTP instead of HTTPS for URLs"
+    enabled: true
+    pattern: "url\\s*[:=]\\s*['\"]?http://(?!localhost|127\\.0\\.0\\.1)"
+    remediation: "Use HTTPS for secure communication"
+
+  - id: POLICY_INSECURE_SSL_VERIFY
+    name: "SSL verification disabled"
+    severity: CRITICAL
+    description: "SSL/TLS verification is disabled"
+    enabled: true
+    pattern: "(validate_certs|verify_ssl)\\s*[:=]\\s*(no|false)"
+    remediation: "Enable SSL/TLS certificate validation"
+
+  - id: POLICY_FIREWALL_ALLOW_ALL
+    name: "Firewall allows all traffic"
+    severity: CRITICAL
+    description: "Firewall rule allows all traffic (0.0.0.0/0)"
+    enabled: true
+    pattern: "source\\s*[:=]\\s*['\"]?(0\\.0\\.0\\.0/0|any)['\"]?"
+    remediation: "Restrict firewall rules to specific IP ranges"
+
+  - id: POLICY_OPEN_PORT_RANGE
+    name: "Open port range detected"
+    severity: HIGH
+    description: "Opening wide range of ports"
+    enabled: true
+    remediation: "Limit exposed ports to only what is necessary"
+
+  # ===== Package Management =====
+  - id: POLICY_PACKAGE_STATE_LATEST
+    name: "Package state set to latest"
+    severity: MEDIUM
+    description: "Package state 'latest' may cause unexpected updates"
+    enabled: true
+    pattern: "state\\s*[:=]\\s*latest"
+    remediation: "Pin specific package versions for reproducibility"
+
+  - id: POLICY_NO_PACKAGE_VERSION
+    name: "No package version specified"
+    severity: LOW
+    description: "Package installed without specific version"
+    enabled: true
+    remediation: "Specify package versions for reproducible deployments"
+
+  - id: POLICY_UNTRUSTED_PACKAGE_SOURCE
+    name: "Untrusted package source"
+    severity: HIGH
+    description: "Installing packages from untrusted sources"
+    enabled: true
+    remediation: "Use official package repositories"
+
+  # ===== Code Quality =====
+  - id: POLICY_NO_TASK_NAME
+    name: "Task without name"
+    severity: LOW
+    description: "Task does not have a name"
+    enabled: true
+    remediation: "Add descriptive names to all tasks for better readability"
+
+  - id: POLICY_LINE_TOO_LONG
+    name: "Line too long"
+    severity: INFO
+    description: "Line exceeds maximum length"
+    enabled: true
+    remediation: "Keep lines under 120 characters for readability"
+
+  - id: POLICY_NO_DESCRIPTION
+    name: "Playbook without description"
+    severity: INFO
+    description: "Playbook lacks description or documentation"
+    enabled: true
+    remediation: "Add description to playbook for documentation"
+
+  - id: POLICY_DEPRECATED_MODULE
+    name: "Deprecated module usage"
+    severity: HIGH
+    description: "Using deprecated Ansible module"
+    enabled: true
+    remediation: "Update to use current recommended modules"
+
+  # ===== Variable Usage =====
+  - id: POLICY_UNDEFINED_VARIABLE
+    name: "Potentially undefined variable"
+    severity: MEDIUM
+    description: "Variable may not be defined"
+    enabled: true
+    remediation: "Define variables in defaults or vars, or use default filter"
+
+  - id: POLICY_INSECURE_VAR_NAME
+    name: "Insecure variable naming"
+    severity: LOW
+    description: "Sensitive data in variable name"
+    enabled: true
+    remediation: "Use vault for sensitive data, not just obscure naming"
+
+  - id: POLICY_FACT_GATHERING_DISABLED
+    name: "Fact gathering disabled"
+    severity: MEDIUM
+    description: "gather_facts is set to no"
+    enabled: true
+    remediation: "Enable fact gathering unless you have a specific reason not to"
+
+  # ===== Data Protection =====
+  - id: POLICY_LOGGING_SENSITIVE_DATA
+    name: "Logging sensitive data"
+    severity: CRITICAL
+    description: "Sensitive data may be logged"
+    enabled: true
+    remediation: "Use no_log: true for tasks handling sensitive data"
+
+  - id: POLICY_NO_LOG_MISSING
+    name: "Missing no_log for sensitive task"
+    severity: HIGH
+    description: "Task handling secrets without no_log"
+    enabled: true
+    remediation: "Add no_log: true to tasks handling passwords, keys, or tokens"
+
+  - id: POLICY_DEBUG_SENSITIVE
+    name: "Debug module with sensitive data"
+    severity: HIGH
+    description: "Debug module may expose sensitive information"
+    enabled: true
+    module: "debug"
+    remediation: "Avoid using debug module with sensitive data or use no_log"
+
+  # ===== File Operations =====
+  - id: POLICY_COPY_WITH_BACKUP_NO
+    name: "Copy without backup"
+    severity: LOW
+    description: "File copy without backup option"
+    enabled: true
+    remediation: "Consider using backup: yes for important files"
+
+  - id: POLICY_FORCE_OVERWRITE
+    name: "Force file overwrite"
+    severity: MEDIUM
+    description: "Using force to overwrite files"
+    enabled: true
+    remediation: "Review necessity of force parameter"
+
+  - id: POLICY_RECURSIVE_DELETE
+    name: "Recursive file deletion"
+    severity: HIGH
+    description: "Recursive deletion operation detected"
+    enabled: true
+    remediation: "Double-check paths when using recursive deletion"
+
+  - id: POLICY_TEMP_FILE_INSECURE
+    name: "Insecure temporary file"
+    severity: MEDIUM
+    description: "Temporary file created with insecure permissions"
+    enabled: true
+    remediation: "Use mktemp or ensure secure permissions for temp files"
+
+  # ===== Service Management =====
+  - id: POLICY_SERVICE_RESTART_ALWAYS
+    name: "Service always restarted"
+    severity: MEDIUM
+    description: "Service configured to always restart"
+    enabled: true
+    remediation: "Use handlers for service restarts based on changes"
+
+  - id: POLICY_SERVICE_NO_ENABLE
+    name: "Service started but not enabled"
+    severity: LOW
+    description: "Service started but not enabled at boot"
+    enabled: true
+    remediation: "Enable services to start at boot if desired"
+
+  # ===== Template and Configuration =====
+  - id: POLICY_TEMPLATE_WITHOUT_VALIDATION
+    name: "Template without validation"
+    severity: MEDIUM
+    description: "Configuration template deployed without validation"
+    enabled: true
+    remediation: "Validate configuration files before deploying"
+
+  - id: POLICY_JINJA2_INJECTION
+    name: "Potential Jinja2 injection"
+    severity: HIGH
+    description: "Untrusted data in Jinja2 template"
+    enabled: true
+    remediation: "Sanitize user input before using in templates"
+
+  # ===== Docker and Container Security =====
+  - id: POLICY_DOCKER_PRIVILEGED
+    name: "Docker container with privileged mode"
+    severity: CRITICAL
+    description: "Docker container running in privileged mode"
+    enabled: true
+    pattern: "privileged\\s*[:=]\\s*(yes|true)"
+    remediation: "Avoid privileged mode, use specific capabilities instead"
+
+  - id: POLICY_DOCKER_HOST_NETWORK
+    name: "Docker host network mode"
+    severity: HIGH
+    description: "Docker container using host network mode"
+    enabled: true
+    pattern: "network_mode\\s*[:=]\\s*['\"]?host['\"]?"
+    remediation: "Use bridge network mode for better isolation"
+
+  - id: POLICY_DOCKER_NO_USER
+    name: "Docker container without user"
+    severity: HIGH
+    description: "Docker container running as root"
+    enabled: true
+    remediation: "Specify non-root user for Docker containers"
+
+  - id: POLICY_DOCKER_INSECURE_REGISTRY
+    name: "Insecure Docker registry"
+    severity: HIGH
+    description: "Using insecure Docker registry"
+    enabled: true
+    remediation: "Use HTTPS for Docker registry connections"
+
+  # ===== Git and Source Control =====
+  - id: POLICY_GIT_NO_VERSION
+    name: "Git checkout without version"
+    severity: MEDIUM
+    description: "Git repository cloned without specific version/tag"
+    enabled: true
+    remediation: "Specify version, tag, or commit hash for reproducibility"
+
+  - id: POLICY_GIT_HTTP
+    name: "Git over HTTP"
+    severity: MEDIUM
+    description: "Using HTTP instead of HTTPS for Git"
+    enabled: true
+    pattern: "repo\\s*[:=]\\s*['\"]?http://(?!localhost)"
+    remediation: "Use HTTPS or SSH for Git repositories"
+
+  # ===== Database Security =====
+  - id: POLICY_DB_NO_SSL
+    name: "Database connection without SSL"
+    severity: HIGH
+    description: "Database connection not using SSL/TLS"
+    enabled: true
+    remediation: "Enable SSL/TLS for database connections"
+
+  - id: POLICY_DB_DEFAULT_PORT
+    name: "Database using default port"
+    severity: LOW
+    description: "Database using default port"
+    enabled: true
+    remediation: "Consider using non-standard port for additional security"
+
+  - id: POLICY_DB_WEAK_PASSWORD
+    name: "Weak database password"
+    severity: CRITICAL
+    description: "Database password appears weak"
+    enabled: true
+    remediation: "Use strong, complex passwords for databases"
+
+  # ===== Ansible Best Practices =====
+  - id: POLICY_NO_WHEN_CONDITION
+    name: "Missing conditional execution"
+    severity: INFO
+    description: "Task may need when condition"
+    enabled: true
+    remediation: "Consider adding when conditions for idempotency"
+
+  - id: POLICY_IGNORE_ERRORS_TRUE
+    name: "Ignore errors enabled"
+    severity: MEDIUM
+    description: "Task ignores errors unconditionally"
+    enabled: true
+    pattern: "ignore_errors\\s*[:=]\\s*(yes|true)"
+    remediation: "Handle errors appropriately instead of ignoring them"
+
+  - id: POLICY_CHANGED_WHEN_MISSING
+    name: "Missing changed_when"
+    severity: LOW
+    description: "Command/shell task without changed_when"
+    enabled: true
+    remediation: "Add changed_when for better idempotency reporting"
+
+  - id: POLICY_FAILED_WHEN_MISSING
+    name: "Missing failed_when"
+    severity: LOW
+    description: "Task may need failed_when condition"
+    enabled: true
+    remediation: "Add failed_when for explicit failure conditions"
+
+  # ===== Cloud Security (AWS) =====
+  - id: POLICY_AWS_PUBLIC_S3
+    name: "Public S3 bucket"
+    severity: CRITICAL
+    description: "S3 bucket configured with public access"
+    enabled: true
+    remediation: "Restrict S3 bucket access to authorized users only"
+
+  - id: POLICY_AWS_SECURITY_GROUP_OPEN
+    name: "AWS security group too permissive"
+    severity: CRITICAL
+    description: "Security group allows unrestricted access"
+    enabled: true
+    remediation: "Restrict security group rules to specific sources"
+
+  - id: POLICY_AWS_IAM_WILDCARD
+    name: "AWS IAM policy with wildcards"
+    severity: HIGH
+    description: "IAM policy uses overly broad wildcards"
+    enabled: true
+    remediation: "Use specific resources and actions in IAM policies"
+
+  # ===== Loop and Iteration =====
+  - id: POLICY_UNSAFE_LOOP_VAR
+    name: "Unsafe loop variable"
+    severity: MEDIUM
+    description: "Loop variable may conflict with reserved names"
+    enabled: true
+    remediation: "Use unique, descriptive loop variable names"
+
+  - id: POLICY_NESTED_LOOP_COMPLEXITY
+    name: "Deeply nested loops"
+    severity: LOW
+    description: "Complex nested loops detected"
+    enabled: true
+    remediation: "Consider refactoring complex loops for maintainability"

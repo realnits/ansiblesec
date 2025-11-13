@@ -1,0 +1,46 @@
+---
+rules:
+  - id: "CUSTOM_001"
+    name: "Require gather_facts"
+    description: "All plays should explicitly set gather_facts"
+    severity: "LOW"
+    enabled: true
+    rule_type:
+      type: "CustomYamlPath"
+      path: "gather_facts"
+
+  - id: "CUSTOM_002"
+    name: "Disallow apt-get"
+    description: "Use apt module instead of apt-get"
+    severity: "MEDIUM"
+    enabled: true
+    rule_type:
+      type: "DisallowModule"
+      modules:
+        - apt-get
+
+  - id: "CUSTOM_003"
+    name: "Require Vault for SSH Keys"
+    description: "SSH private keys must be encrypted"
+    severity: "CRITICAL"
+    enabled: true
+    rule_type:
+      type: "RequireVault"
+      exceptions: []
+
+  - id: "CUSTOM_004"
+    name: "No Wildcard Permissions"
+    description: "File permissions should not be 0777"
+    severity: "HIGH"
+    enabled: true
+    rule_type:
+      type: "CheckPermissions"
+      max_permissions: "0755"
+
+  - id: "CUSTOM_005"
+    name: "Require no_log for User Module"
+    description: "User module tasks should have no_log enabled"
+    severity: "HIGH"
+    enabled: true
+    rule_type:
+      type: "RequireNoLogForSensitive"

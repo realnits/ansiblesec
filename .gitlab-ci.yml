@@ -1,0 +1,38 @@
+stages:
+  - security
+  - sbom
+
+ansible-security-scan:
+  stage: security
+  image: rust:latest
+  before_script:
+    - cargo build --release
+    - cp target/release/ansiblesec /usr/local/bin/
+  script:
+    - ansiblesec scan . --format json --output security-report.json --ci-mode
+  artifacts:
+    reports:
+      sast: security-report.json
+    paths:
+      - security-report.json
+    expire_in: 30 days
+  only:
+    changes:
+      - "**/*.yml"
+      - "**/*.yaml"
+
+ansible-sbom:
+  stage: sbom
+  image: rust:latest
+  before_script:
+    - cargo build --release
+    - cp target/release/ansiblesec /usr/local/bin/
+  script:
+    - ansiblesec sbom . --format cyclonedx --output sbom.json
+  artifacts:
+    paths:
+      - sbom.json
+    expire_in: 30 days
+  only:
+    - main
+    - tags
