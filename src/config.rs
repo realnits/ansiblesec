@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 use crate::errors::Result;
 
@@ -75,7 +75,7 @@ impl Default for Config {
             general: GeneralConfig {
                 max_depth: 10,
                 max_file_size: 10 * 1024 * 1024, // 10MB
-                parallel_jobs: 0, // 0 = auto
+                parallel_jobs: 0,                // 0 = auto
                 cache_enabled: true,
                 cache_dir: Some(PathBuf::from(".ansiblesec_cache")),
                 exclude_paths: vec![
@@ -84,10 +84,7 @@ impl Default for Config {
                     "node_modules".to_string(),
                     "vendor".to_string(),
                 ],
-                exclude_patterns: vec![
-                    "*.retry".to_string(),
-                    "*.swp".to_string(),
-                ],
+                exclude_patterns: vec!["*.retry".to_string(), "*.swp".to_string()],
             },
         }
     }
@@ -96,7 +93,7 @@ impl Default for Config {
 impl Config {
     pub fn load(config_file: Option<PathBuf>) -> Result<Self> {
         let mut config = Self::default();
-        
+
         // Try to load from specified config file or default
         if let Some(ref path) = config_file {
             let content = fs::read_to_string(path)?;
@@ -104,10 +101,10 @@ impl Config {
         } else if let Ok(content) = fs::read_to_string(".ansiblesec.yml") {
             config = serde_yaml::from_str(&content)?;
         }
-        
+
         Ok(config)
     }
-    
+
     pub fn save(&self, path: &Path) -> Result<()> {
         let yaml = serde_yaml::to_string(self)?;
         fs::write(path, yaml)?;

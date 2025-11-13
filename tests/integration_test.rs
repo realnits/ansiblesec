@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use ansiblesec::secrets::*;
-    use ansiblesec::scanner::*;
     use ansiblesec::config::*;
+    use ansiblesec::scanner::*;
+    use ansiblesec::secrets::*;
     use std::fs;
-    use tempfile::TempDir;
     use std::path::PathBuf;
+    use tempfile::TempDir;
 
     #[test]
     fn test_aws_key_detection() {
@@ -14,10 +14,10 @@ mod tests {
 aws_access_key_id: AKIAIOSFODNN7EXAMPLE
 aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 "#;
-        
+
         let findings = detector.scan_content(content);
         assert!(findings.len() >= 1, "Should detect AWS access key");
-        
+
         let has_aws_key = findings.iter().any(|f| f.secret_type.contains("AWS"));
         assert!(has_aws_key, "Should contain AWS key finding");
     }
@@ -26,7 +26,7 @@ aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
     fn test_github_token_detection() {
         let detector = SecretDetector::new(vec![], 4.5).unwrap();
         let content = "github_token: ghp_1234567890abcdefghijklmnopqrstuvwxyz12";
-        
+
         let findings = detector.scan_content(content);
         assert!(!findings.is_empty(), "Should detect GitHub token");
     }
@@ -39,7 +39,7 @@ aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
 -----END RSA PRIVATE KEY-----
 "#;
-        
+
         let findings = detector.scan_content(content);
         assert!(!findings.is_empty(), "Should detect private key");
     }
@@ -47,11 +47,11 @@ MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
     #[test]
     fn test_entropy_detection() {
         let detector = SecretDetector::new(vec![], 4.0).unwrap();
-        
+
         // High entropy string
         let high_entropy = "aB3dEf9hIj2kLm5nOp8qRs1tUv4wXy7z";
         let content = format!("secret_key: \"{}\"", high_entropy);
-        
+
         let findings = detector.scan_content(&content);
         assert!(!findings.is_empty(), "Should detect high entropy string");
     }
@@ -64,10 +64,10 @@ MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
             severity: Severity::High,
             description: "Custom token pattern".to_string(),
         };
-        
+
         let detector = SecretDetector::new(vec![custom_pattern], 4.5).unwrap();
         let content = "api_token: CUSTOM-ABCDEFGHIJKLMNOPQRSTUVWXYZ123456";
-        
+
         let findings = detector.scan_content(content);
         assert!(!findings.is_empty(), "Should detect custom pattern");
     }
@@ -76,7 +76,7 @@ MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
     fn test_scanner_scan_file() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("test.yml");
-        
+
         let content = r#"
 ---
 - name: Test playbook
@@ -88,13 +88,13 @@ MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
     - name: Bad task
       shell: echo "test"
 "#;
-        
+
         fs::write(&file_path, content).unwrap();
-        
+
         let config = Config::default();
         let scanner = Scanner::new(config, 0, false);
         let findings = scanner.scan(&file_path).unwrap();
-        
+
         assert!(findings.files_scanned > 0);
         assert!(findings.total_findings() > 0);
     }
@@ -104,31 +104,31 @@ MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
         let temp_dir = TempDir::new().unwrap();
         let git_dir = temp_dir.path().join(".git");
         fs::create_dir(&git_dir).unwrap();
-        
+
         let git_file = git_dir.join("config.yml");
         fs::write(&git_file, "password: test123").unwrap();
-        
+
         let config = Config::default();
         let scanner = Scanner::new(config, 0, false);
         let findings = scanner.scan(temp_dir.path()).unwrap();
-        
+
         assert_eq!(findings.files_scanned, 0, "Should exclude .git directory");
     }
 
     #[test]
     fn test_scanner_multi_threaded() {
         let temp_dir = TempDir::new().unwrap();
-        
+
         // Create multiple test files
         for i in 0..10 {
             let file_path = temp_dir.path().join(format!("playbook{}.yml", i));
             fs::write(&file_path, "password: test123").unwrap();
         }
-        
+
         let config = Config::default();
         let scanner = Scanner::new(config, 4, false);
         let findings = scanner.scan(temp_dir.path()).unwrap();
-        
+
         assert!(findings.files_scanned >= 10);
     }
 
@@ -156,7 +156,7 @@ MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyz
                 info: 0,
             },
         };
-        
+
         assert!(findings.has_critical());
         assert!(findings.has_high());
         assert!(findings.has_errors());
